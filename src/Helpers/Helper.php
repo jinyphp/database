@@ -7,7 +7,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-<<<<<<< HEAD
+
 namespace Jiny\Database;
 
 if (! function_exists('db_init')) {
@@ -31,6 +31,4 @@ if (! function_exists('bindParams')) {
         return $stmt;
     }
 }
-=======
-use \Jiny\Database;
->>>>>>> 2d5802ee1f38639080133f5f2564c7f28124e3c9
+
