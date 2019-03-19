@@ -3,6 +3,7 @@
 namespace Jiny\Database;
 
 use PDO;
+
 use \Jiny\Database\Builder;
 
 class Database
@@ -30,8 +31,10 @@ class Database
             if (isset($dbname) && $dbname) $this->_dbname = $dbname;
             if (isset($dbuser) && $dbuser) $this->_dbuser = $dbuser;
             if (isset($dbpass) && $dbpass) $this->_dbpass = $dbpass;
+
         }
           
+
     }
 
     /**
@@ -87,7 +90,6 @@ class Database
         // 접속 DB connector를 반환합니다.
         return $this->conn;
     }
-
 
 
     /**
@@ -167,33 +169,37 @@ class Database
         $stmt->execute();
     }
 
+
     /**
      * 
      */
+
 
     public function show($type)
     {
         if (!$this->conn) $this->connect();
 
         $query = "SHOW ".$type;
+
         $stmt = $this->conn->prepare($query);
         
         $stmt->execute();
         return $stmt->fetchAll();
     }
 
-
     public function isTable($table, $list)
     {
         foreach($list as $tbname) {
             if($table == $tbname[0]) return true;
         }
+
         return false;
     }
 
     /**
      * 테이블을 삭제합니다.
      */
+
     public function dropTable($table)
     {
         if (!$this->conn) $this->connect();
@@ -214,6 +220,7 @@ class Database
         $this->exec($stmt);
     }
 
+
     /**
      * 복수 bind 처리
      */
@@ -224,6 +231,7 @@ class Database
         }
         return $stmt;
     }
+
 
     /**
      * 테이블 정보
@@ -260,6 +268,7 @@ class Database
             return $e;
         }
     }
+
 
     private function isTableName($tableName)
     {
