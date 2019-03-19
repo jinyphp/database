@@ -138,7 +138,9 @@ class Database
         if (!$this->conn) $this->connect();
 
         $stmt = $this->conn->prepare($query);
-        $this->bindParams($stmt, $value);
+        if($value) {
+            $this->bindParams($stmt, $value);
+        }  
 
         $stmt->execute();
         return $stmt->fetchAll();
@@ -146,17 +148,38 @@ class Database
 
     public function insert($query, $value)
     {
-        return $this;
+        if (!$this->conn) $this->connect();
+
+        $stmt = $this->conn->prepare($query);
+        if($value) {
+            $this->bindParams($stmt, $value);
+        }  
+
+        $stmt->execute();
     }
 
     public function update($query, $value)
     {
-        return $this;
+        if (!$this->conn) $this->connect();
+
+        $stmt = $this->conn->prepare($query);
+        if($value) {
+            $this->bindParams($stmt, $value);
+        }  
+
+        $stmt->execute();
     }
 
     public function delete($query, $value)
     {
-        return $this;
+        if (!$this->conn) $this->connect();
+
+        $stmt = $this->conn->prepare($query);
+        if($value) {
+            $this->bindParams($stmt, $value);
+        }        
+
+        $stmt->execute();
     }
 
     /**
