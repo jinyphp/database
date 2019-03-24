@@ -31,6 +31,8 @@ class Builder
     public function setTable($table)
     {
         $this->_table = $table;
+
+        //쿼리 빌더의 인스턴스를 반환
         return $this;
     }
 
@@ -75,12 +77,14 @@ class Builder
         $this->exec($stmt);
     }
 
+    // 필드설정
     public function field($name, $value)
     {
         $this->_fields[$name] = $value;
         return $this;
     }
 
+    // 복수 필드 설정
     public function fields($fields)
     {
         foreach ($fields as $f => $v) {
@@ -89,18 +93,21 @@ class Builder
         return $this;
     }
 
+    // 필드 삭제
     public function remove($name)
     {
         unset($this->_feilds[$name]);
         return $this;
     }
 
+    // 엔진 설정
     public function engine($engine)
     {
         $this->_engine = $engine;
         return $this;
     }
 
+    // 문자셋 설정
     public function charset($charset)
     {
         $this->_charset = $charset;
@@ -114,28 +121,7 @@ class Builder
     public function select($field = null, $where=null)
     {
         if ($this->_table) {
-            $query = 'SELECT ';
-
-            if ($field) {
-                $s = "";
-                foreach ($field as $f) $s .= "$f,";
-                $s = rtrim($s, ',');
-                $query .= $s;
-            } else {
-                $query .= "*";
-            }
-
-            $query .= ' FROM '.$this->_table;
-            
-            if ($where) {
-                $query1 = " WHERE";
-                foreach ($where as $k => $v) {
-                    $query1 .= " ".$k." = :".$k." and";
-                }
-                $query .= rtrim($query1,'and');
-
-            }
-
+            $query = $this->_select($this->_table, $field, $where);
             $stmt = $this->conn->prepare($query);
 
             if ($where) {
@@ -145,11 +131,45 @@ class Builder
             $stmt->execute();
             return $stmt->fetchAll();
             
-
         } else {
             echo "선택출력할 DB 테이블명이 없습니다.";
             exit;
         }
+    }
+
+    /**
+     * select 쿼리 String
+     */
+    public function _select($table, $field = null, $where=null)
+    {
+        if(!$table) {
+            echo "테이블명이 없습니다.\n";
+            exit;
+        }
+
+        $query = 'SELECT ';
+
+        if ($field) {
+            $s = "";
+            foreach ($field as $f) $s .= "$f,";
+            $s = rtrim($s, ',');
+            $query .= $s;
+        } else {
+            $query .= "*";
+        }
+
+        $query .= ' FROM '.$this->_table;
+        
+        if ($where) {
+            $query1 = " WHERE";
+            foreach ($where as $k => $v) {
+                $query1 .= " ".$k." = :".$k." and";
+            }
+            $query .= rtrim($query1,'and');
+
+        }
+
+        return $query;
     }
 
     /**

@@ -191,6 +191,8 @@ class Database
         if (!$this->conn) $this->connect();
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
+        
+        return $stmt;
     }
 
 
