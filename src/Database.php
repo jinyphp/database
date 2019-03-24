@@ -191,8 +191,18 @@ class Database
         if (!$this->conn) $this->connect();
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
-        
+
         return $stmt;
+    }
+
+    /**
+     * 유니온
+     */
+
+    public function union($q1,$q2)
+    {
+        $query = "($q1) union ($q2)";
+        return $query;
     }
 
 
