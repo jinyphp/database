@@ -195,10 +195,8 @@ class Database
 
 
     /**
-     * 
+     * 정보를 출력합니다.
      */
-
-
     public function show($type)
     {
         if (!$this->conn) $this->connect();
