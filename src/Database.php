@@ -146,6 +146,7 @@ class Database
         return $stmt->fetchAll();
     }
 
+    // RawSQL 삽입처리
     public function insert($query, $value)
     {
         if (!$this->conn) $this->connect();
