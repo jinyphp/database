@@ -11,9 +11,9 @@
 namespace Jiny\Database;
 
 if (! function_exists('db_init')) {
-    function db_init($info) {
-        if (file_exists(DBINFO)) {
-            $dbconf = include DBINFO;
+    function db_init($conf) {
+        if (file_exists($conf)) {
+            $dbconf = include $conf;
             return new \Jiny\Database\Database($dbconf);
         } else {
             echo "DB 설정파일이 없습니다.";
