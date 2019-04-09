@@ -5,6 +5,7 @@ namespace Jiny\Database;
 use PDO;
 
 use \Jiny\Database\Builder;
+use \Jiny\Database\Table;
 
 class Database
 {
@@ -123,12 +124,26 @@ class Database
 
 
     // 쿼리빌더
-    private $builder;
+    private $table;
     public function table($table)
     {
         if (!$this->conn) $this->connect();
-        $this->builder = new Builder($this->conn, $this);
-        return $this->builder->setTable($table);
+        $this->table = new Table($this->conn, $this);
+        return $this->table->setTable($table);
+    }
+
+    /**
+     * 복수 데이터 읽기
+     */
+    public function fetchAll($statement)
+    {
+        $rows = [];
+        // PDO::FETCH_ASSOC
+        // PDO::FETCH_OBJ
+        while($row = $statement->fetch(PDO::FETCH_ASSOC)) {
+            $rows []= $row;
+        }
+        return $rows;
     }
 
 

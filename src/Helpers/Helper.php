@@ -32,3 +32,14 @@ if (! function_exists('bindParams')) {
     }
 }
 
+/**
+ * 연상배열 여부 체크
+ */
+if (! function_exists('isAssoArray')) {
+    function isAssoArray($arr)
+    {
+        return array_keys($arr) !== range(0, count($arr) - 1);
+    }
+}
+
+
