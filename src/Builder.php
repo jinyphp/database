@@ -13,14 +13,14 @@ class Builder
     private $_fields = [];
     private $_wheres = [];
 
+    private $query = "";
+
     public function __construct($table)
     {
         $this->table = $table;
         $this->conn = $table->conn();
         $this->db = $table->db();
     }
-
-    private $query = "";
 
     public function clear()
     {
@@ -115,10 +115,10 @@ class Builder
         $this->fields($data);
         $query = "UPDATE ".$this->table->name()." SET ";
         foreach ($data as $field => $value) {
-                $query .= $field."= :".$field." ,";
+                $query .= "`".$field."` = :".$field." ,";
         }
 
-        $query .= $this->table::UPDATED_AT."= '".date("Y-m-d H:i:s")."' ,";
+        $query .= "".$this->table::UPDATED_AT." = '".date("Y-m-d H:i:s")."' ,";
 
         $this->query .= rtrim($query,',');
         return $this;
@@ -141,6 +141,12 @@ class Builder
 
         $this->table->bindParams($stmt, $this->_wheres);
         $this->table->bindParams($stmt, $this->_fields);
+
+        // echo "쿼리=".$this->query."<br>";
+        // print_r($this->_wheres);
+        // print_r($this->_fields);
+        // var_dump($stmt);
+        
 
         if(($e = $this->db->exec($stmt)) !== true) {
             // 오류 처리
