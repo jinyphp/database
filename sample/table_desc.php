@@ -1,10 +1,14 @@
 <?php
-const ROOT = "";
-require __DIR__.ROOT."/vendor/autoload.php";
+require "../../../../vendor/autoload.php";
 
 // DB를 초기화 합니다.
-const DBINFO = "dbconf.php";
-$db = \Jiny\Database\db_init(DBINFO);
+$dbinfo = \Jiny\Database\db_conf("dbconf.php");
+$db = \Jiny\Database\db_init($dbinfo);
+if ($db) {
+    echo "db 접속 성공\n";
+} else {
+    echo "db 접속 실패\n";
+}
 
 // board2 테이블의 정보를 확인합니다.
 if(!$desc = $db->desc('board2')) {

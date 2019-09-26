@@ -12,14 +12,17 @@ class Table
     private $_table;
 
     private $_fields = [];
-    private $_engine;
-    private $_charset;
-
+    
     const PRIMARYKEY = 'id';
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
     private $builder;
+    private $action;
+
+    use TableCreate, TableSelect, TableInsert, TableUpdate, TableDelete;
+
+    
 
     /**
      * 빌더 초기화
@@ -29,19 +32,28 @@ class Table
         $this->conn = $conn;
         $this->db = $db;
 
-        $this->builder = new Builder($this);
+        // $this->builder = new Builder($this);
     }
 
+    /**
+     * database 객체를 참조합니다.
+     */
     public function db()
     {
         return $this->db;
     }
 
+    /**
+     * 컨넥션 정보를 읽어 옵니다.
+     */
     public function conn()
     {
         return $this->conn;
     }
 
+    /**
+     * 테이블명
+     */
     public function name()
     {
         return $this->_table;
@@ -59,47 +71,8 @@ class Table
     }
 
     /**
-     * 테이블 생성
+     * 필드 설정
      */
-    public function create()
-    {
-        $tables = $this->db->show('TABLES');
-        if ($this->db->isTable($this->_table, $tables)) {
-            echo "중복 테이블: 생성을 할 수 없습니다.";
-            exit;
-        }
-
-        // 기본 필드 중복 생성 방지
-        unset($this->_fields[self::PRIMARYKEY]);
-        unset($this->_fields[self::CREATED_AT]);
-        unset($this->_fields[self::UPDATED_AT]);
-
-        // 쿼리 조합
-        $query = "CREATE TABLE ".$this->_table;
-        $query .= " (`".self::PRIMARYKEY."` INT NOT NULL AUTO_INCREMENT,";
-        
-        foreach ($this->_fields as $f => $v) {
-            $query .= "`$f` $v,";
-        }
-
-        $query .= "`".self::CREATED_AT."` datetime,";
-        $query .= "`".self::UPDATED_AT."` datetime,";
-        $query .= "PRIMARY KEY(id)) ";
-
-        if ($this->_engine) {
-            $query .= "ENGINE=".$this->_engine." ";
-        }
-
-        if ($this->_charset) {
-            $query .= "CHARSET=".$this->_charset." ";
-        }
-
-        $stmt = $this->conn->prepare($query);
-
-        $this->exec($stmt);
-    }
-
-    // 필드설정
     public function field($name, $value)
     {
         $this->_fields[$name] = $value;
@@ -107,7 +80,12 @@ class Table
     }
 
     // 복수 필드 설정
-    public function fields($fields)
+    public function setFields($fields)
+    {
+        return $this->fields($fields);
+    }
+
+    private function fields($fields)
     {
         foreach ($fields as $f => $v) {
             $this->_fields[$f] = $v;
@@ -115,296 +93,104 @@ class Table
         return $this;
     }
 
-    // 필드 삭제
+    /**
+     * 빌더 필드 삭제
+     */
     public function remove($name)
     {
         unset($this->_feilds[$name]);
         return $this;
     }
 
-    // 엔진 설정
-    public function engine($engine)
+    /**
+     * 생성된 쿼리를 확인합니다.
+     */
+    private $query;
+    public function getQuery() :string
     {
-        $this->_engine = $engine;
+        return $this->query;
+    }
+
+    public function __toString()
+    {      
+        return $this->query;
+    }
+
+    public function clear()
+    {
+        $this->query = "";
         return $this;
     }
 
-    // 문자셋 설정
-    public function charset($charset)
-    {
-        $this->_charset = $charset;
-        return $this;
-    }
-
-        /**
-     * select 쿼리 String
-     */
-    
-/**
-     * 입력 데이터 기준, 자동 필드추가
-     */
-    private function autoField($data)
-    {
-        // 컬럼 필드 정보를 읽어 옵니다.
-        $desc = $this->db->desc($this->_table);
-
-        foreach(array_keys($data) as $key) {
-            if(!array_key_exists($key, $desc)) {
-                $this->addField($key);
-            }
-        }
-    }
-
-    public function addField($field, $type='text')
-    {
-        if (!$this->conn) $this->connect();
-
-        $query = "ALTER TABLE ".$this->_table." ADD ".$field." ".$type;
-        $stmt = $this->conn->prepare($query);
-        if(($e = $this->exec($stmt)) !== true) {
-            // 오류처리
-        }
-    }
-
-
     /**
-     * 테이블을 삭제합니다.
+     * 생성된 쿼리를 실행합니다. 
      */
-    public function drop()
+    private $stmt;
+    public function run($data=null)
     {
-        $query = "DROP TABLES IF EXISTS ".$this->_table;   
-        $stmt = $this->conn->prepare($query);
-        $this->exec($stmt);
-    }    
-    
-
-
-
-
-
-
-
-
-    /**
-     * 조회 쿼리를 생성합니다.
-     */
-    public function select($field = null, $where=null)
-    {
-        if ($this->_table) {
-            return $this->builder->select($field);
-        } else {
-            echo "선택출력할 DB 테이블명이 없습니다.";
-            exit;
-        }
-    }
-
-
-    public function insert(array $data, $matching=false, $create=false)
-    {
-        // 연상배열 여부 체크
-        if(!isAssoArray($data)) {
-            // 다중처리
-            foreach($data as $d) $this->insert($d);
-
-        } else {
-            // 단일처리
-            $query = $this->builder->insert($data);
-
-            $stmt = $this->conn->prepare($query);
-            $this->bindParams($stmt, $data);
-            if(($e = $this->exec($stmt)) !== true) {
-                switch($e->getCode()) {
-                    case '42S22':
-                        // 컬럼 필드 매칭오류
-                        if($matching) {
-                            // 자동으로 필드를 추가합니다.
-                            $this->autoField($data);
-
-                            // 다시 재귀 실행으로 데이터를 삽입을 처리합니다.
-                            $this->insert($data);
-                            return;
-                        } 
-                        break;
-                    
-                    // 테이블 없음.
-                    case '42S02':
-                        if($create) {
-                            // 필드 생성
-                            foreach(array_keys($data) as $key) {
-                                $fields[$key] = 'text';
-                            }
-
-                            // 테이블을 생성합니다.
-                            $this->fields($fields);
-                            if($create['ENGINE']) $tb->engine("InnoDB");
-                            if($create['CHARSET']) $tb->charset("utf8");
-                            $this->create();
-
-                            // 다시 재귀 실행으로 데이터를 삽입을 처리합니다.
-                            $this->insert($data);
-
-                            return;
-
-                        }
-                        break;
-                    default:
+        echo "\n쿼리 명령 실행:".$this->query."\n" ;
+        print_r($data);
+        // 쿼리 실행을 위해서 statement를 설정합니다.
+        $this->stmt = $this->conn->prepare($this->query);
+        if($data) {
+            if(isAssoArray($data)) {
+                echo "binding\n";
+                // 데이터를 바인딩 하여 처리 합니다.
+                $this->bindParams($this->stmt, $data);
+                $this->exec($this->stmt, $data);
+            } else if(is_array($data)) {
+                // 복수의 데이터를 바인딩 하여 처리 합니다.
+                foreach($data as $d) {
+                    $this->bindParams($this->stmt, $d);
+                    $this->exec($this->stmt, $data);
                 }
-
-                echo "Database Error: 코드".$e->getCode()."\n";
-                echo $e->getMessage()."\n";
-                exit;
             }
-        }
+        } else {
+            // 실행 매개변수 데이터 x
+            echo "단일 데이터\n";
+            $this->exec($this->stmt, $data);
+        }      
+
+        return $this;
     }
 
-    
-    
-    /**
-     * 데이터를 삭제합니다.
-     */
-    public function delete()
+    private function exec($stmt, $data=null)
     {
+        try {
+            // 실행 결과를 반환합니다.
+            if($stmt->execute($data)) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (\PDOException $e) {
+            // 예외 발생
+            echo "예외발생 -----\n";
+            echo $e->getCode()."\n";
+            echo $e->getMessage()."\n";
 
-        if ($this->_table) {
-            return $this->builder->delete();
-        } else {
-            echo "테이블명이 없습니다.";
-            exit;
-        }
+            $method = "Exception_".$e->getCode();
+            if (method_exists($this, $method)) {
+                // 예외를 처리 동작을 수행합니다.
 
-        /*
-        if (!$where) {
-            echo "삭제 조건이 없습니다.";
-            exit;
-
-        } else if (is_string($where)) {
-            switch ($where) {
-                case '*':
-                    // 전체 삭제
-                    $query = "DELETE FROM ".$this->_table." ";
-                    $stmt = $this->conn->prepare($query);
-                    $this->exec($stmt);
-                    break;
+                // 현재의 작업을 객체를 백업합니다.
+                $stack = clone $this; // 지역변수
+                if($this->$method($e)) {
+                    // 예외처리 성공
+                    // 재실행
+                    echo "\n명령 재실행\n";
+                    echo $stack->getQuery()."\n";
+                    print_r($data);
+                    $stack->run($data);
+                } else {
+                    echo "Database 예외처리 오류";
+                    exit;
+                }
                 
-                default:
-                    $query = "DELETE FROM ".$this->table." WHERE ".$where;
-                    $stmt = $this->conn->prepare($query);
-                    $this->exec($stmt);
-                    break;
-            }
-        } else if (is_numeric($where)) {
-            // 단일 아이디 선택
-            $query = "DELETE FROM ".$this->_table." WHERE id= :id";
-            $stmt = $this->conn->prepare($query);
-            $id = htmlspecialchars(strip_tags($where));
-            $stmt->bindParam(':id', $id);
-
-            $this->exec($stmt);
-
-        } else if (is_array($where)) {
-            $query = "DELETE FROM ".$this->_table." WHERE ";
-
-            foreach ($where as $id) {
-                $query .= '`id` = ? or ';
-            }
-
-            $query = rtrim($query,'or ');
-            $stmt = $this->conn->prepare($query);
-
-            $this->exec($stmt,$where);
+            }            
         }
-        */
-
     }
 
-    
-    
-
-    public function update($data)
-    {
-        if ($this->_table) {
-            return $this->builder->update($data);
-        } else {
-            echo "테이블명이 없습니다.";
-            exit;
-        }
-
-        /*
-        if($this->isAssoArray($data) && $where) {
-            if (!$this->conn) $this->connect();
-
-            // 연관배열 데이터
-            if(is_numeric($where)) {
-                $id = intval($where);
-                $stmt = $this->updateId($data, $id);
-            } else 
-            if(is_string($where)) {
-                switch ($where) {
-                    case '*':
-                        $stmt = $this->updateAll($data);
-                        break;
-                    default:
-                        $stmt = $this->updateQuery($data, $where);
-                }
-            } else 
-            if(is_array($where)) {
-                $stmt = $this->updateWhere($data, $where);
-            }
-
-            $this->bindParams($stmt, $data);
-            if(($e = $this->exec($stmt)) !== true) {
-                // 오류 처리
-            }
-
-        } else {
-            // 숫자 배열
-            // 재귀호출 반복실행
-            foreach ($data as $k => $v) {
-                if(is_numeric($k)) $this->update($v, $k);
-            }
-        }   
-        */  
-    }
-
-    private function updateQuery($data, $where)
-    {
-        $query = $this->queryUpdate($data);
-        $query .= " WHERE ".$where;
-
-        $stmt = $this->conn->prepare($query);
-        return $stmt;
-    }
-
-    private function updateAll($data)
-    {
-        $query = $this->queryUpdate($data);
-        $stmt = $this->conn->prepare($query);
-      
-        return $stmt;
-    }
-
-    /**
-     * 조건문으로 갱신
-     */
-    private function updateWhere($data, $where)
-    { 
-        $query = $this->queryUpdate($data);
-        $query .= " WHERE ";
-
-        foreach ($where as $k => $v) {
-            $query .= $k."= :".$k." and ";
-        }
-        $query = rtrim($query,'and ');
-
-        $stmt = $this->conn->prepare($query);
-        $this->bindParams($stmt, $where);   // 조건
-
-        return $stmt;
-    }
-
-    
-
-    
     /**
      * 복수 bind 처리
      */
@@ -416,37 +202,97 @@ class Table
         return $stmt;
     }
 
-
-    public function exec($stmt, $value=null)
+    /**
+     * 자동 테이블 생성 체크
+     */
+    private $auto_create = false;
+    public function createAuto($flag=true)
     {
-        return $this->db->exec($stmt, $value=null);
+        $this->auto_create = $flag;
+        return $this;
+    }
+
+    private $auto_field = false;
+    public function fieldAuto($flag=true)
+    {
+        $this->auto_field = $flag;
+        return $this;
     }
 
 
-    public function count($field = null, $where=null)
+    /**
+     * Exception 처리 루틴
+     */
+    private function Exception_42S02($e)
     {
-        if ($this->_table) {
-           
-            $query = $this->select($field)->where($where);
-            $query = str_replace("*","count(id)",$query);
-            $stmt = $this->conn->prepare($query);
-
-            if ($where) {
-                $this->bindParams($stmt, $where);
+        echo "테이블이 존재하지 않습니다.\n";
+        if ($this->auto_create) {
+            echo "테이블을 생성합니다.\n";
+            print_r($this->_fields);
+            // 동작구분
+            if(isAssoArray($this->_fields)) { 
+                // 필드 생성
+                foreach(array_keys($this->_fields) as $key) {
+                    $fields[$key] = 'text';
+                }              
+            } else {
+                // 필드 생성
+                foreach ($this->_fields as $key) {
+                    $fields[$key] = "text";
+                }
             }
+            // 테이블 생성
+            print_r($fields);
+            $query = $this->create($fields)->getQuery();
+            echo $query;
+            $this->run();
 
-            $stmt->execute();
-            $num = $stmt->fetch();
+            echo "테이블이 생성이 되었습니다.";
 
-            return $num['count(id)'];
-            
-            
-        } else {
-            echo "선택출력할 DB 테이블명이 없습니다.";
-            exit;
+            return true;
         }
+
+        return false;
     }
 
+    private function Exception_42S22($e)
+    {
+        //echo "테이블 필드가 일치하지 않습니다.\n";
+        //echo $e->getCode()."\n";
+        //echo $e->getMessage()."\n";
+        if ($this->auto_field) {
+            //echo "필드를 일치 합니다.\n";
+            //print_r($this->_fields);
+            // 자동으로 필드를 추가합니다.
+            $this->autoField($this->_fields);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 입력 데이터 기준, 자동 필드추가
+     */
+    private function autoField($data)
+    {
+        // 컬럼 필드 정보를 읽어 옵니다.
+        $desc = $this->db->desc($this->_table);
+
+        if(isAssoArray($data)) {
+            // 연상배열
+            foreach(array_keys($data) as $key) {
+                if(!array_key_exists($key, $desc)) {
+                    $this->addField($key);
+                }
+            }
+        } else {
+            foreach($data as $key) {
+                if(!array_key_exists($key, $desc)) {
+                    $this->addField($key);
+                }
+            }
+        }        
+    }
     /**
      * 
      */

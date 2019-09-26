@@ -12,7 +12,7 @@ class Database
     private $_dbhost = 'localhost';
     private $_dbtype = 'mysql';
     private $_dbcharset = 'utf8';
-    
+
     private $_dbname = null;
     private $_dbuser = null;
     private $_dbpass = null;
@@ -34,7 +34,7 @@ class Database
             if (isset($dbpass) && $dbpass) $this->_dbpass = $dbpass;
 
         }
-          
+
 
     }
 
@@ -74,20 +74,28 @@ class Database
                 exit;
             }
 
+            $attr =[ 
+                PDO::MYSQL_ATTR_FOUND_ROWS => true
+            ];
+
             try {
-                $this->conn = new PDO($host, $this->_dbuser, $this->_dbpass);
-                
-                //오류 숨김모드 해제, Exception을 발생시킨다.
-                $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-                
+
+                $this->conn = new PDO($host, $this->_dbuser, $this->_dbpass, $attr);
                 // echo "DB 접속 성공\n";
-    
-            } catch(PDOException $e) {
-                echo "실패\n";
+
+            } catch(\PDOException $e) {
+                // Exception을 발생시킨다
+                echo "DB 실패\n";
                 echo $e->getMessage();
+                exit;
             }
-        }       
-        
+
+            //오류 숨김모드 해제, .
+            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+
+        }
+
         // 접속 DB connector를 반환합니다.
         return $this->conn;
     }
@@ -97,7 +105,7 @@ class Database
      * DB이름 getter/setter
      */
     public function setDBName($dbname)
-    {   
+    {
         $this->_dbname = $dbname;
     }
 
@@ -122,69 +130,112 @@ class Database
         $this->_dbpass = $pass;
     }
 
-
-    // 쿼리빌더
-    private $table;
-    public function table($table)
+    /**
+     * Raw 쿼리를 실행합니다.
+     */
+    private $stmt;
+    public function execute($query)
     {
         if (!$this->conn) $this->connect();
-        $this->table = new Table($this->conn, $this);
-        return $this->table->setTable($table);
+        try {
+            $this->stmt = $this->conn->prepare($query);
+            $this->stmt->execute();
+            return $this->stmt;
+        } catch(\PDOException $e) {
+            echo $e->getCode()."\n";
+            echo $e->getMessage();
+        }
+    }
+
+    public function statement()
+    {
+        return $this->stmt;
     }
 
     /**
-     * 복수 데이터 읽기
+     * raw쿼리 업데이트
      */
-    public function fetchAll($statement)
+    public function update($query, $value=null)
     {
-        $rows = [];
-        // PDO::FETCH_ASSOC
-        // PDO::FETCH_OBJ
-        while($row = $statement->fetch(PDO::FETCH_ASSOC)) {
-            $rows []= $row;
+        if (!$this->conn) $this->connect();
+
+        $this->stmt = $this->conn->prepare($query);
+        if($value) {
+            $this->bindParams($this->stmt, $value);
         }
-        return $rows;
+
+        $this->stmt->execute();
+        return $this;
     }
 
+    public function updateCheck()
+    {
+        $count = $this->stmt->rowCount();
+        if($count > 0){
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-    // Raw 쿼리 메소드
+    /**
+     * 데이터 읽기
+     */
+    public function fetchAll($type=null)
+    {
+        // PDO::FETCH_NUM : 숫자 인덱스 배열 반환
+        // PDO::FETCH_ASSOC : 컬럼명이 키인 연관배열 반환
+        // PDO::FETCH_BOTH : 위 두가지 모두
+        // PDO::FETCH_OBJ : 컬럼명이 프로퍼티인 인명 객체 반환
+        return $this->stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function fetch($type=null)
+    {
+        return $this->stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * 파라미터 적용, 목록을 읽어 옵니다. 
+     */
     public function select($query, $value=null)
     {
         if (!$this->conn) $this->connect();
 
-        $stmt = $this->conn->prepare($query);
+        $this->stmt = $this->conn->prepare($query);
         if($value) {
-            $this->bindParams($stmt, $value);
-        }  
+            $this->bindParams($this->stmt, $value);
+        }
 
-        $stmt->execute();
-        return $stmt->fetchAll();
+        $this->stmt->execute();
+        return $this;
     }
 
-    // RawSQL 삽입처리
+    /**
+     * RawSQL 처리
+     * SQL문을 이용히여 데이터를 삽입합니다.
+     */
     public function insert($query, $value)
     {
         if (!$this->conn) $this->connect();
 
-        $stmt = $this->conn->prepare($query);
+        $this->stmt = $this->conn->prepare($query);
         if($value) {
-            $this->bindParams($stmt, $value);
-        }  
+            $this->bindParams($this->stmt, $value);
+        }
 
-        $stmt->execute();
+        $this->stmt->execute();
+        return $this;
     }
 
-    public function update($query, $value)
+    /**
+     * 데이터 삽입후 마지막 ID확인
+     */
+    public function lastID()
     {
-        if (!$this->conn) $this->connect();
-
-        $stmt = $this->conn->prepare($query);
-        if($value) {
-            $this->bindParams($stmt, $value);
-        }  
-
-        $stmt->execute();
+        return $this->conn->lastInsertId();
     }
+ 
 
     public function delete($query, $value)
     {
@@ -193,22 +244,28 @@ class Database
         $stmt = $this->conn->prepare($query);
         if($value) {
             $this->bindParams($stmt, $value);
-        }        
+        }
 
         $stmt->execute();
     }
+
+    
 
     /**
-     * 쿼리를 실행합니다.
+     * 쿼리빌더
      */
-    public function execute($query)
+    private $table;
+    public function table($table=null)
     {
         if (!$this->conn) $this->connect();
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-
-        return $stmt;
+        $this->table = new Table($this->conn, $this);
+        if($table){
+            $this->table->setTable($table);
+        }
+        return $this->table;
     }
+
+
 
     /**
      * 유니온
@@ -231,23 +288,35 @@ class Database
         $query = "SHOW ".$type;
 
         $stmt = $this->conn->prepare($query);
-        
+
         $stmt->execute();
         return $stmt->fetchAll();
     }
 
-    public function isTable($table, $list)
+    /**
+     * 테이블을 확인합니다.
+     */
+    public function isTable($table)
+    {
+        $tables = $this->show('TABLES');
+        return $this->tableExist($table, $tables);
+    }
+
+    private function tableExist($table, $list)
     {
         foreach($list as $tbname) {
             if($table == $tbname[0]) return true;
         }
-
         return false;
     }
 
     /**
      * 테이블을 삭제합니다.
      */
+    public function tableDrop($table)
+    {
+        return $this->dropTable($table);
+    }
 
     public function dropTable($table)
     {
@@ -264,9 +333,9 @@ class Database
             // 단일 테이블
             $query = "DROP TABLES IF EXISTS ".$table;
         }
-        
+
         $stmt = $this->conn->prepare($query);
-        $this->exec($stmt);
+        $stmt->execute();
     }
 
 
@@ -290,7 +359,7 @@ class Database
 
         $query = "DESC ".$table;
         $stmt = $this->conn->prepare($query);
-        
+
         $stmt->execute();
         $arr = $stmt->fetchAll();
 
@@ -305,8 +374,10 @@ class Database
     /**
      * 쿼리를 실행합니다.
      */
+    /*
     public function exec($stmt, $value=null)
     {
+
         try {
             if($stmt->execute($value)) {
                 return true;
@@ -317,6 +388,7 @@ class Database
             return $e;
         }
     }
+    */
 
 
     private function isTableName($tableName)
@@ -340,6 +412,6 @@ class Database
     }
 
     /**
-     * 
+     *
      */
 }
