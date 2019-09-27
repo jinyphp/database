@@ -87,4 +87,8 @@ trait TableCreate
             // 오류처리
         }
     }
+
+    /**
+     * 
+     */
 }

@@ -46,25 +46,37 @@ trait TableUpdate
     function updateNew($data)
     {
         $this->action = "updateNew";
-        echo ">>>".$this->action."\n";
+        //echo ">>>".$this->action."\n";
         // 데이터 확인
         $stack = clone $this;
         $query = $stack->selectId($data)->getQuery();
-        echo "stack>>".$query."\n";
+        //echo "stack>>".$query."\n";
 
         $stack->run(['id'=>$data['id']]);
         
         if($rows = $stack->fetch()){
-            print_r($rows);
-            exit;
-            echo "데이터 갱신\n";
+            //print_r($rows);
+            // exit;
+            //echo "데이터 갱신\n";
             $this->updateId($data);
         } else {
-            echo "데이터가 없습니다.\n";
+            //echo "데이터가 없습니다.\n";
             $this->insert($data);
         }
 
         return $this;
+    }
+
+    public function updateInc($field, $num=1)
+    {
+        if ($this->_table) {
+            $query = "UPDATE ".$this->name()." SET ";
+            $query .= "`".$field."` = `".$field."` + $num WHERE `id` = :id";
+            $this->query = $query;
+
+            return $this;
+        }
+        
     }
 
     /**
@@ -143,6 +155,12 @@ trait TableUpdate
     private function updateWhere($data, $where)
     { 
         $query = $this->queryUpdate($data);
+        $query .= $this->where($where);
+
+        $this->query = $query;
+        return $this;
+        
+        /*
         $query .= " WHERE ";
 
         foreach ($where as $k => $v) {
@@ -154,6 +172,7 @@ trait TableUpdate
         $this->bindParams($stmt, $where);   // 조건
 
         return $stmt;
+        */
     }
 
 

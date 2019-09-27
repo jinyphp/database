@@ -128,13 +128,13 @@ class Table
     private $stmt;
     public function run($data=null)
     {
-        echo "\n쿼리 명령 실행:".$this->query."\n" ;
-        print_r($data);
+        //echo "\n쿼리 명령 실행:".$this->query."\n" ;
+        //print_r($data);
         // 쿼리 실행을 위해서 statement를 설정합니다.
         $this->stmt = $this->conn->prepare($this->query);
         if($data) {
             if(isAssoArray($data)) {
-                echo "binding\n";
+                //echo "binding\n";
                 // 데이터를 바인딩 하여 처리 합니다.
                 $this->bindParams($this->stmt, $data);
                 $this->exec($this->stmt, $data);
@@ -147,7 +147,7 @@ class Table
             }
         } else {
             // 실행 매개변수 데이터 x
-            echo "단일 데이터\n";
+            //echo "단일 데이터\n";
             $this->exec($this->stmt, $data);
         }      
 
@@ -165,9 +165,9 @@ class Table
             }
         } catch (\PDOException $e) {
             // 예외 발생
-            echo "예외발생 -----\n";
-            echo $e->getCode()."\n";
-            echo $e->getMessage()."\n";
+            //echo "예외발생 -----\n";
+            //echo $e->getCode()."\n";
+            //echo $e->getMessage()."\n";
 
             $method = "Exception_".$e->getCode();
             if (method_exists($this, $method)) {
@@ -178,9 +178,9 @@ class Table
                 if($this->$method($e)) {
                     // 예외처리 성공
                     // 재실행
-                    echo "\n명령 재실행\n";
-                    echo $stack->getQuery()."\n";
-                    print_r($data);
+                    //echo "\n명령 재실행\n";
+                    //echo $stack->getQuery()."\n";
+                    //print_r($data);
                     $stack->run($data);
                 } else {
                     echo "Database 예외처리 오류";
@@ -225,7 +225,35 @@ class Table
      */
     private function Exception_42S02($e)
     {
-        echo "테이블이 존재하지 않습니다.\n";
+        //echo "테이블이 존재하지 않습니다.\n";
+        $memento = clone $this;
+        if ($memento->auto_create) {
+            //echo "테이블을 생성합니다.\n";
+            //print_r($memento->_fields);
+            // 동작구분
+            if(isAssoArray($memento->_fields)) { 
+                // 필드 생성
+                foreach(array_keys($memento->_fields) as $key) {
+                    $fields[$key] = 'text';
+                }              
+            } else {
+                // 필드 생성
+                foreach ($memento->_fields as $key) {
+                    $fields[$key] = "text";
+                }
+            }
+            // 테이블 생성
+            //print_r($fields);
+            $query = $memento->create($fields)->getQuery();
+            //echo $query;
+            $memento->run();
+
+            //echo "테이블이 생성이 되었습니다.";
+
+            return true;
+        }
+
+        /*
         if ($this->auto_create) {
             echo "테이블을 생성합니다.\n";
             print_r($this->_fields);
@@ -251,6 +279,7 @@ class Table
 
             return true;
         }
+        */
 
         return false;
     }

@@ -44,17 +44,6 @@ class Builder
     }
 
 
-
-
-    
-
-    
-
-
-    
-
-    
-
     public function exec()
     {
         $stmt = $this->conn->prepare($this->query);
@@ -72,13 +61,6 @@ class Builder
             // 오류 처리
         }
     }
-
-    
-
-
-
-
-
 
     
 

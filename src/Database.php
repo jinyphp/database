@@ -371,26 +371,6 @@ class Database
         return $desc;
     }
 
-    /**
-     * 쿼리를 실행합니다.
-     */
-    /*
-    public function exec($stmt, $value=null)
-    {
-
-        try {
-            if($stmt->execute($value)) {
-                return true;
-            } else {
-                return false;
-            }
-        } catch (\PDOException $e) {
-            return $e;
-        }
-    }
-    */
-
-
     private function isTableName($tableName)
     {
         if ($tableName) {

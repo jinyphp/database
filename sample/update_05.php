@@ -11,12 +11,12 @@ if ($db) {
 }
 
 // 쿼리빌더 객체를 생성합니다.
-$builder = $db->table("board8");
+$builder = $db->table("board10");
 
 // 갱신할 데이터를 선택합니다.
 $data = [
     'id'=>11,
-    'title' => 'hello 12'
+    'title' => 'hello world'
 ];
 
 $query = $builder->createAuto()->updateNew($data)->getQuery();
