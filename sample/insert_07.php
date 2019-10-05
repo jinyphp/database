@@ -14,7 +14,7 @@ if ($db) {
  * 데이터를 삽입합니다.
  */
 
-$builder = $db->table("board6");
+$builder = $db->table("board7");
 
 // 배열 데이터를 작성합니다.
 $titleText = "자동 컬럼";
