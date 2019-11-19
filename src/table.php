@@ -173,8 +173,6 @@ class Table
         } catch (\PDOException $e) {
             // 예외 발생
             //echo "예외발생 -----\n";
-            //echo $e->getCode()."\n";
-            //echo $e->getMessage()."\n";
 
             $method = "Exception_".$e->getCode();
             if (method_exists($this, $method)) {
@@ -185,12 +183,9 @@ class Table
                 if($this->$method($e)) {
                     // 예외처리 성공
                     // 재실행
-                    //echo "\n명령 재실행\n";
-                    //echo $stack->getQuery()."\n";
-                    //print_r($data);
                     $stack->run($data);
                 } else {
-                    echo "Database 예외처리 오류";
+                    echo "Database 오류 ".$e->getCode();
                     exit;
                 }
                 
@@ -226,13 +221,19 @@ class Table
         return $this;
     }
 
+    private function error_message($e, $msg=null)
+    {
+        echo "<br>";
+        echo "[".$e->getCode()."] ".$msg;
+        exit;
+    }
 
     /**
      * Exception 처리 루틴
+     * 테이블이 존재하지 않습니다.
      */
     private function Exception_42S02($e)
     {
-        //echo "테이블이 존재하지 않습니다.\n";
         $memento = clone $this;
         if ($memento->auto_create) {
             //echo "테이블을 생성합니다.\n";
@@ -258,35 +259,9 @@ class Table
             //echo "테이블이 생성이 되었습니다.";
 
             return true;
+        } else {
+            $this->error_message($e, "테이블이 존재하지 않습니다.");
         }
-
-        /*
-        if ($this->auto_create) {
-            echo "테이블을 생성합니다.\n";
-            print_r($this->_fields);
-            // 동작구분
-            if(isAssoArray($this->_fields)) { 
-                // 필드 생성
-                foreach(array_keys($this->_fields) as $key) {
-                    $fields[$key] = 'text';
-                }              
-            } else {
-                // 필드 생성
-                foreach ($this->_fields as $key) {
-                    $fields[$key] = "text";
-                }
-            }
-            // 테이블 생성
-            print_r($fields);
-            $query = $this->create($fields)->getQuery();
-            echo $query;
-            $this->run();
-
-            echo "테이블이 생성이 되었습니다.";
-
-            return true;
-        }
-        */
 
         return false;
     }
