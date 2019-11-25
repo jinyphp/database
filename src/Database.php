@@ -398,6 +398,7 @@ class Database
         }
     }
 
+    //////////
     /**
      * 데이터베이스 목록을 출력합니다.
      */
@@ -420,6 +421,32 @@ class Database
         return false;
     }
 
+    //////////
+
+    public function setTableComment($database, $tableName, $comment)
+    {
+        // db.table
+        $query = "ALTER TABLE `".$database."`.`".$tableName."` COMMENT = '".$comment."' ;";
+        if (!$this->conn) $this->connect();
+        $stmt = $this->conn->prepare($query);
+
+        $stmt->execute();
+    }
+
+    public function tableComment($database, $tableName=null)
+    {
+        $query = "SELECT TABLE_NAME, TABLE_COMMENT FROM information_schema.tables ";
+        $query .= "where table_schema='$database' ";
+        if($tableName) $query .= "and table_name='$tableName' ;";
+
+        echo $query;
+
+        if (!$this->conn) $this->connect();
+        $stmt = $this->conn->prepare($query);
+
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
 
     /**
