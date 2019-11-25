@@ -25,7 +25,7 @@ if (! function_exists('db_conf')) {
  * DB접속을 초기화 합니다.
  */
 if (! function_exists('db_init')) {
-    function db_init($dbconf) {
+    function db_init(array $dbconf) {
         if ($dbconf) {
             return new \Jiny\Database\Database($dbconf);
         } else {

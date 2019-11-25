@@ -399,6 +399,30 @@ class Database
     }
 
     /**
+     * 데이터베이스 목록을 출력합니다.
+     */
+    public function databases()
+    {
+        $query = "SHOW DATABASES";
+
+        if (!$this->conn) $this->connect();
+        $stmt = $this->conn->prepare($query);
+
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function isDatabase($name)
+    {
+        foreach ($this->databases() as $value) {
+            if ($value['Database'] == $name) return true;
+        }
+        return false;
+    }
+
+
+
+    /**
      *
      */
 }
