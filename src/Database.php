@@ -188,18 +188,18 @@ class Database
     /**
      * 데이터 읽기
      */
-    public function fetchAll($type=null)
+    public function fetchAll($type=PDO::FETCH_ASSOC)
     {
         // PDO::FETCH_NUM : 숫자 인덱스 배열 반환
         // PDO::FETCH_ASSOC : 컬럼명이 키인 연관배열 반환
         // PDO::FETCH_BOTH : 위 두가지 모두
         // PDO::FETCH_OBJ : 컬럼명이 프로퍼티인 인명 객체 반환
-        return $this->stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $this->stmt->fetchAll($type);
     }
 
-    public function fetch($type=null)
+    public function fetch($type=PDO::FETCH_ASSOC)
     {
-        return $this->stmt->fetch(PDO::FETCH_ASSOC);
+        return $this->stmt->fetch($type);
     }
 
     /**
@@ -422,7 +422,9 @@ class Database
     }
 
     //////////
-
+    /**
+     * 테이블 코멘트 설정
+     */
     public function setTableComment($database, $tableName, $comment)
     {
         // db.table
@@ -433,13 +435,16 @@ class Database
         $stmt->execute();
     }
 
+    /**
+     * 테이블 코멘트 읽기
+     */
     public function tableComment($database, $tableName=null)
     {
         $query = "SELECT TABLE_NAME, TABLE_COMMENT FROM information_schema.tables ";
         $query .= "where table_schema='$database' ";
         if($tableName) $query .= "and table_name='$tableName' ;";
 
-        echo $query;
+        // echo $query;
 
         if (!$this->conn) $this->connect();
         $stmt = $this->conn->prepare($query);
@@ -448,6 +453,20 @@ class Database
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    ///////////
+    /**
+     * DB체크
+     * 버전정보
+     */
+    public function version()
+    {
+        $query = "SELECT VERSION() as version;";
+        if (!$this->conn) $this->connect();
+        $stmt = $this->conn->prepare($query);
+
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC)['version'];
+    }
 
     /**
      *
