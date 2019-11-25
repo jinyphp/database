@@ -6,8 +6,9 @@ const DBINFO = "dbconf.php";
 $dbinfo = \Jiny\Database\db_conf(DBINFO);
 $db = \Jiny\Database\db_init($dbinfo);
 
-
-if ($row = $db->descField("board","regdate")) {
-    print_r($row);
+if ($db->isDatabase("apitest")) {
+    echo "데이터베이스가 있습니다.";
+} else {
+    echo "데이터베이스 없음.";
 }
 

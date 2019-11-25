@@ -312,7 +312,7 @@ class Table
     private function autoField($data)
     {
         // 컬럼 필드 정보를 읽어 옵니다.
-        $desc = $this->db->desc($this->_table);
+        $desc = $this->db->tableFields($this->_table);
 
         if(isAssoArray($data)) {
             // 연상배열

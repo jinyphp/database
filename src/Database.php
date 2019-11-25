@@ -361,7 +361,7 @@ class Database
     /**
      * 테이블 정보
      */
-    public function desc($table) {
+    public function tableFields($table) {
         if (!$this->conn) $this->connect();
 
         $query = "DESC ".$table;
@@ -376,6 +376,28 @@ class Database
         }
 
         return $desc;
+    }
+
+    /**
+     * 테이블 정보
+     */
+    public function desc($table)
+    {
+        if (!$this->conn) $this->connect();
+
+        $query = "DESC ".$table;
+        $stmt = $this->conn->prepare($query);
+
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    public function descField($table, $field)
+    {
+        foreach ($this->desc($table) as $row) {
+            if($row['Field'] == $field) return $row;
+        }
+        return false;
     }
 
     private function isTableName($tableName)
@@ -453,6 +475,34 @@ class Database
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function setFieldComment($database, $tableName, $field, $message)
+    {
+        $info = $this->descField($tableName, $field);
+        $query = "ALTER TABLE `$database`.`$tableName` ";
+        $query .= "CHANGE COLUMN `$field` `$field` ".$info['Type']." ";
+        if($info['Null']) $query .= "NULL "; else $query .= "NOT NULL ";
+        if($info['Default']) $query .= "DEFAULT ".$info['Default']." "; else $query .= "DEFAULT NULL ";
+        $query .= "COMMENT '$message';";
+
+        if (!$this->conn) $this->connect();
+        $stmt = $this->conn->prepare($query);
+
+        $stmt->execute();
+    }
+
+    public function fieldComment($database, $tableName)
+    {
+        $query = "SELECT TABLE_NAME, COLUMN_NAME, COLUMN_COMMENT FROM information_schema.COLUMNS ";
+        $query .= "where table_schema='$database' ";
+        if($tableName) $query .= "and table_name='$tableName' ;";
+
+        if (!$this->conn) $this->connect();
+        $stmt = $this->conn->prepare($query);
+
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     ///////////
     /**
      * DB체크
@@ -460,6 +510,7 @@ class Database
      */
     public function version()
     {
+        // "SHOW VARIABLES LIKE '%VERSION%'"
         $query = "SELECT VERSION() as version;";
         if (!$this->conn) $this->connect();
         $stmt = $this->conn->prepare($query);

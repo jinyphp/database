@@ -7,7 +7,7 @@ $dbinfo = \Jiny\Database\db_conf(DBINFO);
 $db = \Jiny\Database\db_init($dbinfo);
 
 
-if ($rows = $db->databases()) {
+if ($rows = $db->desc("board")) {
     print_r($rows);
 }
 

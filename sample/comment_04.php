@@ -6,8 +6,9 @@ const DBINFO = "dbconf.php";
 $dbinfo = \Jiny\Database\db_conf(DBINFO);
 $db = \Jiny\Database\db_init($dbinfo);
 
+$db->setFieldComment("apitest","board","regdate","message3333");
 
-if ($row = $db->descField("board","regdate")) {
-    print_r($row);
+if ($rows = $db->fieldComment("apitest","board")) {
+    print_r($rows);
 }
 

@@ -7,7 +7,7 @@ $dbinfo = \Jiny\Database\db_conf(DBINFO);
 $db = \Jiny\Database\db_init($dbinfo);
 
 
-if ($row = $db->descField("board","regdate")) {
-    print_r($row);
+if ($rows = $db->fieldComment("apitest","board")) {
+    print_r($rows);
 }
 
