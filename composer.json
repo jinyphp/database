@@ -1,9 +1,10 @@
 {
     "name": "jiny/database",
-    "description": "jinyPHP database",
+    "description": "database for JinyPHP",
     "keywords": [
         "jinyPHP",
-        "framwork"
+        "framwork",
+        "auth"
     ],
     "homepage": "http://www.jinyphp.com",
     "type": "library",
@@ -17,8 +18,8 @@
     ],
     "minimum-stability": "stable",
     "require": {
-        "php": ">= 7.0"
-        
+        "php": "^8.0.2",
+        "livewire/livewire": "^2.11"
     },
     "autoload": {
         "psr-4": {
@@ -26,7 +27,14 @@
         },
         "files": [
             "src/Helpers/Helper.php"
-        ]        
-   
+        ]
+
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Jiny\\Auth\\JinyDatabaseServiceProvider"
+            ]
+        }
     }
 }
