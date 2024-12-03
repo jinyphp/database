@@ -8,7 +8,7 @@ use Livewire\Livewire;
 
 class JinyDatabaseServiceProvider extends ServiceProvider
 {
-    private $package = "jiny-dbms";
+    private $package = "jiny-database";
     public function boot()
     {
         // 모듈: 라우트 설정
@@ -22,11 +22,6 @@ class JinyDatabaseServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/config/database.php' => config_path('jiny/database.php'),
         ]);
-
-        // $this->publishes([
-        //     __DIR__.'/../resources/actions/' => resource_path('actions')
-        // ], 'database-actions');
-
 
     }
 

@@ -4,7 +4,7 @@
     "keywords": [
         "jinyPHP",
         "framwork",
-        "auth"
+        "database"
     ],
     "homepage": "http://www.jinyphp.com",
     "type": "library",
@@ -18,17 +18,21 @@
     ],
     "minimum-stability": "stable",
     "require": {
-        "php": "^8.0.2",
-        "livewire/livewire": "^2.11"
+        "php": "^8.2"
     },
     "autoload": {
         "psr-4": {
-            "Jiny\\Database\\": "src/"
+            "Jiny\\Database\\": "/"
         },
         "files": [
-            "src/Helpers/Helper.php"
+            "Helpers/Helper.php"
         ]
 
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Jiny\\Database\\Tests\\": "tests/"
+        }
     },
     "extra": {
         "laravel": {
