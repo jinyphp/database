@@ -23,6 +23,15 @@ class JinyDatabaseServiceProvider extends ServiceProvider
             __DIR__.'/config/database.php' => config_path('jiny/database.php'),
         ]);
 
+        // 커멘드 명령
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \Jiny\Database\Console\Commands\TableSeeder::class,
+                \Jiny\Database\Console\Commands\TableDrop::class,
+                \Jiny\Database\Console\Commands\TableShow::class,
+            ]);
+        }
+
     }
 
     public function register()
